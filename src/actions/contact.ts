@@ -24,6 +24,15 @@ type ConsultationData = {
   googleMeetLink?: string
 }
 
+function escapeHtml(value: string){
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function buildTransport(){
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -42,6 +51,12 @@ export async function sendContactEmail(data: ContactData){
 
     const name = `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() || '—'
 
+    const escapedName = escapeHtml(name)
+    const escapedEmail = escapeHtml(data.email)
+    const escapedPhone = escapeHtml(data.phone || '—')
+    const escapedService = escapeHtml(data.service || 'Demo')
+    const escapedMessage = escapeHtml(data.message || '').replace(/\n/g, '<br/>')
+
     const mailOptions = {
       from: process.env.SMTP_USER,
       replyTo: data.email,
@@ -49,34 +64,107 @@ export async function sendContactEmail(data: ContactData){
       subject: `📩 Demo / Contact request from ${name}`,
       text: `Name: ${name}\nEmail: ${data.email}\nPhone: ${data.phone || '—'}\nService: ${data.service || 'demo'}\n\nMessage:\n${data.message || ''}`,
       html: `
-        <h2>Demo / Contact Request</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> <a href="mailto:${data.email}">${data.email}</a></p>
-        <p><strong>Phone:</strong> ${data.phone || '—'}</p>
-        <p><strong>Service:</strong> ${data.service || 'Demo'}</p>
-        <hr/>
-        <p>${(data.message || '').replace(/\n/g, '<br/>')}</p>
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+          <h2>📩 New Demo Request</h2>
+
+          <table cellpadding="8">
+            <tr>
+              <td><strong>Name</strong></td>
+              <td>${escapedName}</td>
+            </tr>
+            <tr>
+              <td><strong>Email</strong></td>
+              <td>${escapedEmail}</td>
+            </tr>
+            <tr>
+              <td><strong>Phone</strong></td>
+              <td>${escapedPhone}</td>
+            </tr>
+            <tr>
+              <td><strong>Service</strong></td>
+              <td>${escapedService}</td>
+            </tr>
+          </table>
+
+          <hr />
+
+          <h3>Message</h3>
+          <p>${escapedMessage}</p>
+
+          <div style="margin-top:24px;">
+            <a
+              href="mailto:${escapedEmail}"
+              style="
+                background:#16a34a;
+                color:white;
+                text-decoration:none;
+                padding:12px 20px;
+                border-radius:8px;
+              "
+            >
+              Reply To Customer
+            </a>
+          </div>
+        </body>
+        </html>
       `,
     }
 
-    // send email but do not persist anywhere — fire and forget
-    await transporter.sendMail(mailOptions)
-
-    // Optionally send a confirmation to the requester if SMTP_TO_REQUESTER is set
-    if(process.env.SMTP_SEND_CONFIRMATION === 'true'){
-      const confirm = {
-        from: process.env.SMTP_USER,
-        to: data.email,
-        subject: `Thanks — we received your demo request`,
-        html: `
-          <p>Hi ${data.firstName ?? ''},</p>
-          <p>Thanks for requesting a demo. We'll review your message and get back to you soon.</p>
-          <p>— The team</p>
-        `,
-      }
-      // don't await confirmation send to keep it fire-and-forget friendly
-      transporter.sendMail(confirm).catch(()=>{})
+    const confirm = {
+      from: process.env.SMTP_USER,
+      to: data.email,
+      subject: `Thanks — we received your demo request`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif; background:#f8fafc; padding:40px;">
+          <table width="600" align="center" style="background:white; padding:40px; border-radius:12px;">
+            <tr>
+              <td>
+                <h1>Thank You For Your Interest</h1>
+                <p style="font-size:16px; color:#4b5563;">Hi ${escapeHtml(data.firstName ?? '')},</p>
+                <p style="font-size:16px; color:#4b5563;">We've received your request and will contact you shortly.</p>
+                <p style="font-size:16px; color:#4b5563;">In the meantime, you can explore our Hardware Store Management System demo. *Use desktop mode</p>
+                <div style="margin:32px 0;">
+                  <a
+                    href="https://hardware-in6f.onrender.com"
+                    style="
+                      background:#2563eb;
+                      color:white;
+                      text-decoration:none;
+                      padding:14px 28px;
+                      border-radius:8px;
+                      font-weight:600;
+                      display:inline-block;
+                    "
+                  >
+                    View Live Demo
+                  </a>
+                </div>
+                <hr style="border:none; border-top:1px solid #e5e7eb;" />
+                <h3>What You Can Explore</h3>
+                <ul>
+                  <li>Inventory Management</li>
+                  <li>Sales Tracking</li>
+                  <li>Customer Debt Tracking</li>
+                  <li>Business Reports</li>
+                  <li>Low Stock Alerts</li>
+                </ul>
+                <p style="margin-top:30px;">Regards,<br/>Hardware POS Team</p>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
     }
+
+    await Promise.all([
+      transporter.sendMail(mailOptions),
+      transporter.sendMail(confirm),
+    ])
 
     return { success: true }
   }catch(err: any){
@@ -96,29 +184,119 @@ export async function scheduleConsultation(data: ConsultationData){
     const formattedDate = format(new Date(data.selectedDate), 'MMMM dd, yyyy')
     const dayName = format(new Date(data.selectedDate), 'EEEE')
 
+    const escapedFirstName = escapeHtml(data.firstName ?? '')
+    const escapedLastName = escapeHtml(data.lastName ?? '')
+    const escapedEmail = escapeHtml(data.email)
+    const escapedPhone = escapeHtml(data.phone || '—')
+    const escapedService = escapeHtml(data.service || 'Demo')
+    const escapedMeetUrl = escapeHtml(meetUrl)
+
     const applicantMail = {
       from: process.env.SMTP_USER,
       to: data.email,
       subject: `✅ Consultation Confirmed - ${data.service || 'Demo'}`,
       html: `
-        <h2>Consultation Confirmed</h2>
-        <p>Hi ${data.firstName ?? ''},</p>
-        <p>Your consultation is scheduled for <strong>${dayName}, ${formattedDate} at ${data.selectedTime}</strong>.</p>
-        <p><a href="${meetUrl}">Join Google Meet</a></p>
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif; background:#f8fafc; padding:40px;">
+          <table width="600" align="center" style="background:white; padding:40px; border-radius:12px;">
+            <tr>
+              <td>
+                <h1>✅ Consultation Confirmed</h1>
+                <p>Your consultation has been scheduled.</p>
+                <div style="background:#f3f4f6; padding:20px; border-radius:10px; margin:20px 0;">
+                  <p><strong>Date:</strong> ${escapeHtml(`${dayName}, ${formattedDate}`)}</p>
+                  <p><strong>Time:</strong> ${escapedMeetUrl ? escapeHtml(data.selectedTime) : escapeHtml(data.selectedTime)}</p>
+                </div>
+                <div style="margin:24px 0;">
+                  <a
+                    href="${escapedMeetUrl}"
+                    style="
+                      background:#2563eb;
+                      color:white;
+                      text-decoration:none;
+                      padding:14px 24px;
+                      border-radius:8px;
+                      display:inline-block;
+                    "
+                  >
+                    Join Consultation
+                  </a>
+                </div>
+                <div style="margin:24px 0;">
+                  <a
+                    href="https://hardware-in6f.onrender.com"
+                    style="
+                      background:#111827;
+                      color:white;
+                      text-decoration:none;
+                      padding:14px 24px;
+                      border-radius:8px;
+                      display:inline-block;
+                    "
+                  >
+                    Explore Demo System
+                  </a>
+                </div>
+                <p>We look forward to speaking with you.</p>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `
     }
 
     const companyMail = {
       from: process.env.SMTP_USER,
       to: process.env.SMTP_TO || process.env.SMTP_USER,
-      subject: `📅 New Consultation: ${data.firstName ?? ''} ${data.lastName ?? ''}`,
+      subject: `📅 New Consultation: ${escapedFirstName} ${escapedLastName}`,
       html: `
-        <h2>New Consultation Scheduled</h2>
-        <p><strong>Name:</strong> ${data.firstName ?? ''} ${data.lastName ?? ''}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Phone:</strong> ${data.phone || '—'}</p>
-        <p><strong>When:</strong> ${dayName}, ${formattedDate} at ${data.selectedTime}</p>
-        <p><strong>Meet:</strong> <a href="${meetUrl}">${meetUrl}</a></p>
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+          <h2>📩 New Demo Request</h2>
+
+          <table cellpadding="8">
+            <tr>
+              <td><strong>Name</strong></td>
+              <td>${escapedFirstName} ${escapedLastName}</td>
+            </tr>
+            <tr>
+              <td><strong>Email</strong></td>
+              <td>${escapedEmail}</td>
+            </tr>
+            <tr>
+              <td><strong>Phone</strong></td>
+              <td>${escapedPhone}</td>
+            </tr>
+            <tr>
+              <td><strong>Service</strong></td>
+              <td>${escapedService}</td>
+            </tr>
+          </table>
+
+          <hr />
+
+          <h3>Message</h3>
+          <p>${escapeHtml(data.additionalNotes || '').replace(/\n/g, '<br/>')}</p>
+
+          <div style="margin-top:24px;">
+            <a
+              href="mailto:${escapedEmail}"
+              style="
+                background:#16a34a;
+                color:white;
+                text-decoration:none;
+                padding:12px 20px;
+                border-radius:8px;
+              "
+            >
+              Reply To Customer
+            </a>
+          </div>
+        </body>
+        </html>
       `
     }
 
