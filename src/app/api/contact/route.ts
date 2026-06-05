@@ -6,12 +6,14 @@ export async function POST(req: Request){
     const form = await req.formData()
     const fullName = form.get('name')?.toString() ?? ''
     const email = form.get('email')?.toString() ?? ''
+    const phone = form.get('phone')?.toString() ?? ''
+    const service = form.get('service')?.toString() ?? ''
     const message = form.get('message')?.toString() ?? ''
 
     const [firstName, ...rest] = fullName.split(' ')
     const lastName = rest.join(' ')
 
-    const result = await sendContactEmail({ firstName, lastName, email, message })
+    const result = await sendContactEmail({ firstName, lastName, email, phone, service: service || 'Demo', message })
     if(result.success) return NextResponse.json({ ok: true })
     return NextResponse.json({ ok: false, error: result.error }, { status: 500 })
   }catch(e: any){
