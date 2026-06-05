@@ -5,7 +5,7 @@ import { useState } from 'react'
 export default function Page() {
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
-  const [form, setForm] = useState({ name: '', phone: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', phone: '', email: '', country: '', message: '' })
   const [menuOpen, setMenuOpen] = useState(false)
 
   function showToast(type: 'success' | 'error', msg: string) {
@@ -15,8 +15,8 @@ export default function Page() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.name || !form.phone) {
-      showToast('error', 'Please fill in your name and phone number.')
+    if (!form.name || !form.phone || !form.country || !form.email) {
+      showToast('error', 'Please fill in your name, phone, country, and email.')
       return
     }
     setSending(true)
@@ -26,13 +26,13 @@ export default function Page() {
       const res = await fetch('/api/contact', { method: 'POST', body: fd })
       if (res.ok) {
         showToast('success', "Request sent! We'll reach out within 24 hours.")
-        setForm({ name: '', phone: '', email: '', message: '' })
+        setForm({ name: '', phone: '', email: '', country: '', message: '' })
       } else {
         showToast('error', 'Something went wrong. Please email us directly.')
       }
     } catch {
       showToast('success', "Request noted — we'll be in touch soon!")
-      setForm({ name: '', phone: '', email: '', message: '' })
+      setForm({ name: '', phone: '', email: '', country: '', message: '' })
     }
     setSending(false)
   }
@@ -40,8 +40,8 @@ export default function Page() {
   const features = [
     {
       icon: '�',
-      title: 'Inventory',
-      desc: 'Track products, stock movements, and low stock alerts.',
+      title: 'Flexible Unit Management',
+      desc: 'Sell products in multiple units (bags → kg, liters → ml, meters → pieces). Track bulk stock and partial usage automatically without stock mismatches.',
       img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=700&auto=format&fit=crop&q=80',
     },
     {
@@ -73,9 +73,9 @@ export default function Page() {
   ]
 
   const testimonials = [
-    { stars: '★★★★★', text: '"Before Hardware Stocks I was losing money on stolen stock. Now I know exactly what\'s in my shop every morning."', author: 'James Mutua', role: 'Mutua Hardware, Nairobi', avatar: 'JM' },
-    { stars: '★★★★★', text: '"The debt tracker is a lifesaver. I used to forget who owed me money. Now I get paid on time and my cash flow is much better."', author: 'Amina Odhiambo', role: 'Odhiambo Supplies, Kisumu', avatar: 'AO' },
-    { stars: '★★★★★', text: '"Set it up myself in one afternoon. My staff picked it up on the first day. The alerts alone have saved us from running out of stock twice."', author: 'Daniel Kariuki', role: 'Kariuki Ironworks, Nakuru', avatar: 'DK' },
+    { stars: '★★★★★', text: '"We used to lose track of cement because we sell both full bags and smaller quantities. Now stock is clear every day."', author: 'Hardware Store Owner', role: 'Nairobi, Kenya', avatar: 'HS' },
+    { stars: '★★★★★', text: '"Credit customers were hard to track manually. Now we know exactly who owes and for how long. Collections are easier."', author: 'Retail Shop Owner', role: 'Tanzania', avatar: 'RS' },
+    { stars: '★★★★★', text: '"Counter sales are faster because we can quickly find items and prices. Operations feel organized for the first time."', author: 'Hardware Operator', role: 'Kenya', avatar: 'HO' },
   ]
 
   return (
@@ -182,6 +182,19 @@ export default function Page() {
         .section-tag { font-size: 0.72rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--orange); margin-bottom: .75rem; }
         h2 { font-family: var(--display); font-size: clamp(1.8rem, 2.8vw, 2.8rem); font-weight: 900; line-height: 1.15; letter-spacing: -0.03em; }
         h2 em { color: var(--orange); font-style: italic; }
+        .single-column-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 1100px) {
+          .single-column-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        .trust-grid { display: grid; grid-template-columns: 1fr 380px; gap: 3rem; align-items: stretch; }
+        .trust-image, .scenario-image { border-radius: 16px; width: 100%; object-fit: cover; }
+        .scenario-grid { display: grid; grid-template-columns: 380px 1fr; gap: 3rem; align-items: stretch; }
+        @media (max-width: 900px) {
+          .trust-grid,
+          .scenario-grid { grid-template-columns: 1fr; }
+          .trust-image,
+          .scenario-image { display: none; }
+        }
 
         /* FEATURES */
         .features-section { background: #fff; padding: 6rem 5vw; }
@@ -261,7 +274,8 @@ export default function Page() {
         }
         .contact-input::placeholder, .contact-textarea::placeholder { color: rgba(255,255,255,.4); }
         .contact-input:focus, .contact-textarea:focus { border-color: rgba(232,81,10,.5); }
-        .contact-email { margin-bottom: 1rem; }
+        .contact-email { margin-bottom: 0; }
+        .contact-textarea { margin-bottom: 1rem; }
         .submit-btn {
           display: flex; align-items: center; justify-content: center; gap: .6rem;
           width: 100%; background: var(--orange); color: #fff; border: none;
@@ -411,15 +425,15 @@ export default function Page() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-left">
-          <div className="badge"><span className="badge-dot" /> Now available in East Africa</div>
+          <div className="badge"><span className="badge-dot" /> Used by hardware stores across Africa</div>
           <h1 className="hero-h1">
-            Track Stock, Sales, and Customer Debts<br />From One Simple System
+            Manage stock, sales, credit customers, and<br />mixed-unit products from one system
           </h1>
           <p className="hero-sub">
-            Know what is in stock, record every sale, track customer debts, and monitor business performance without relying on notebooks or spreadsheets.
+            Designed for shops dealing with bags, kg, meters, liters, and credit sales — where manual tracking causes real losses. Built specifically for African hardware and retail businesses.
           </p>
           <div className="btn-group">
-            <a href="#contact" className="btn-primary">Request a Demo</a>
+            <a href="#contact" className="btn-primary">See how it works in real shops →</a>
             <a href="#features" className="btn-outline">Learn More</a>
           </div>
         </div>
@@ -436,6 +450,45 @@ export default function Page() {
               <span>Roofing nails — 14 units left</span>
             </div>
             <div className="hero-card-live">⚡ Live</div>
+          </div>
+        </div>
+      </section>
+
+      {/* AFRICAN RETAIL REALITY */}
+      <section style={{ background: '#fff', padding: '6rem 5vw' }}>
+          <div className="section-tag">Built for Real African Business</div>
+          <h2 style={{ marginBottom: '1rem' }}>Most systems aren't built for <em>how African retail actually works</em></h2>
+          <p style={{ fontSize: '1.05rem', fontWeight: 300, lineHeight: 1.85, color: 'var(--mid)', maxWidth: '800px', marginBottom: '2.5rem' }}>
+            Hardware Stocks is built around real challenges hardware and retail shop owners face across East Africa:
+          </p>
+          <div className="single-column-grid">
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ fontSize: '1.8rem', minWidth: '50px' }}>📦</div>
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '.5rem' }}>Selling goods in mixed units</div>
+              <p style={{ fontSize: '0.875rem', lineHeight: 1.8, color: 'var(--mid)' }}>Bags, kg, meters, liters \— selling both bulk and fractional quantities from the same stock</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ fontSize: '1.8rem', minWidth: '50px' }}>💳</div>
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '.5rem' }}>Managing customer credit</div>
+              <p style={{ fontSize: '0.875rem', lineHeight: 1.8, color: 'var(--mid)' }}>Credit sales are normal, repayment delays are common, tracking manually is impossible</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ fontSize: '1.8rem', minWidth: '50px' }}>⚡</div>
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '.5rem' }}>Fast-moving counter sales</div>
+              <p style={{ fontSize: '0.875rem', lineHeight: 1.8, color: 'var(--mid)' }}>Busy shops need quick lookups, instant stock checks, and rapid checkout</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ fontSize: '1.8rem', minWidth: '50px' }}>📊</div>
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '.5rem' }}>Manual multi-supplier tracking</div>
+              <p style={{ fontSize: '0.875rem', lineHeight: 1.8, color: 'var(--mid)' }}>Stock comes from many suppliers with different terms — reconciliation is manual</p>
+            </div>
           </div>
         </div>
       </section>
@@ -499,7 +552,7 @@ export default function Page() {
 
       {/* HOW IT WORKS */}
       <section className="how-section" id="how">
-        <div className="section-tag" style={{ color: 'var(--orange)' }}>Simple process</div>
+        <div className="section-tag" style={{ color: '#E8510A' }}>Simple process</div>
         <h2 style={{ color: '#fff', marginTop: '.25rem' }}>Up and running<br /><em>in minutes</em></h2>
         <p className="how-sub">No technical training needed. If you can use a smartphone, you can use Hardware Stocks.</p>
         <div className="steps-grid">
@@ -531,8 +584,8 @@ export default function Page() {
 
       {/* WHY CHOOSE US */}
       <section className="testi-section">
-        <div className="section-tag">Built Specifically For Hardware Stores</div>
-        <h2>Designed to help hardware store owners gain better visibility<br /><em>into stock, sales and customer debts.</em></h2>
+        <div className="section-tag">Real Hardware Store Solutions</div>
+        <h2>Supporting hardware and retail businesses<br />in Kenya, Tanzania, <em>and across Africa</em></h2>
         <div className="testi-grid">
           {testimonials.map((t, i) => (
             <div className="testi-card" key={i}>
@@ -555,7 +608,7 @@ export default function Page() {
         <div className="pricing-header">
           <div className="section-tag">Simple Pricing</div>
           <h2>Hardware Store Plan</h2>
-          <p className="pricing-sub">Transparent pricing for stores that need inventory, sales, debt, and reporting in one place.</p>
+          <p className="pricing-sub">Built for small and medium hardware businesses scaling operations. Transparent pricing — no hidden charges.</p>
         </div>
         <div className="price-card">
           <div className="price-badge">Hardware Store Plan</div>
@@ -577,12 +630,104 @@ export default function Page() {
         </div>
       </section>
 
+      {/* WHY TRUST US */}
+      <section style={{ background: '#fff', padding: '6rem 5vw', borderTop: '1px solid rgba(100,70,30,.1)' }}>
+        <div className="trust-grid">
+          <div>
+            <div className="section-tag">Why Businesses Trust Us</div>
+            <h2 style={{ marginBottom: '2rem' }}>Built from real feedback from<br /><em>African hardware shop owners</em></h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
+              <div style={{ background: 'var(--orange-pale)', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(232,81,10,.15)' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '.75rem' }}>🎯</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '.4rem', color: 'var(--dark)' }}>Real problems</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)' }}>Designed around real counter sales environments</p>
+              </div>
+              <div style={{ background: 'var(--orange-pale)', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(232,81,10,.15)' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '.75rem' }}>⚡</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '.4rem', color: 'var(--dark)' }}>Speed & simplicity</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)' }}>Fast lookups, quick sales, accurate tracking</p>
+              </div>
+              <div style={{ background: 'var(--orange-pale)', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(232,81,10,.15)' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '.75rem' }}>📈</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '.4rem', color: 'var(--dark)' }}>Continuously improving</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)' }}>Updated based on real shop owner feedback</p>
+              </div>
+              <div style={{ background: 'var(--orange-pale)', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(232,81,10,.15)' }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: '.75rem' }}>🤝</div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '.4rem', color: 'var(--dark)' }}>Local support</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)' }}>Built for African retail operations</p>
+              </div>
+            </div>
+          </div>
+          <img className="trust-image" src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&auto=format&fit=crop&q=80" alt="Team collaboration" />
+        </div>
+      </section>
+
+      {/* REAL SCENARIOS */}
+      <section style={{ background: 'var(--light)', padding: '6rem 5vw' }}>
+        <div className="scenario-grid">
+          <img className="scenario-image" src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&auto=format&fit=crop&q=80" alt="Business analytics" />
+          <div>
+            <div className="section-tag">Built for Everyday Shop Operations</div>
+            <h2 style={{ marginBottom: '3rem' }}>Real scenarios, <em>real solutions</em></h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.75rem' }}>
+              <div style={{ background: '#fff', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(100,70,30,.12)' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--dark)' }}>📦 Cement in kg</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)', marginBottom: '0.75rem' }}>50-kg bags sold by kg. Automatic tracking, no stock mismatch.</p>
+                <div style={{ fontSize: '0.75rem', color: '#E8510A', fontWeight: 600 }}>→ No lost inventory</div>
+              </div>
+              <div style={{ background: '#fff', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(100,70,30,.12)' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--dark)' }}>💳 Credit tracking</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)', marginBottom: '0.75rem' }}>Who owes, how much, for how long. Auto reminders, clear process.</p>
+                <div style={{ fontSize: '0.75rem', color: '#E8510A', fontWeight: 600 }}>→ Better cash flow</div>
+              </div>
+              <div style={{ background: '#fff', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(100,70,30,.12)' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--dark)' }}>⚡ Fast counter sales</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)', marginBottom: '0.75rem' }}>Quick lookups, instant checks, fast checkout, no delays.</p>
+                <div style={{ fontSize: '0.75rem', color: '#E8510A', fontWeight: 600 }}>→ Happier customers</div>
+              </div>
+              <div style={{ background: '#fff', padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(100,70,30,.12)' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--dark)' }}>📊 Stock check</div>
+                <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--mid)', marginBottom: '0.75rem' }}>Know inventory without counting. Identify reorders instantly.</p>
+                <div style={{ fontSize: '0.75rem', color: '#E8510A', fontWeight: 600 }}>→ Better planning</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CUSTOM SOLUTIONS */}
+      <section style={{ background: '#110D05', padding: '6rem 5vw' }}>
+        <div>
+          <div className="section-tag" style={{ color: '#FF7A3D' }}>Beyond Hardware Stocks</div>
+          <h2 style={{ color: '#fff', marginBottom: '1rem' }}>We also build <em>custom software solutions</em></h2>
+          <p style={{ fontSize: '0.95rem', fontWeight: 300, lineHeight: 1.85, color: 'rgba(255,255,255,.7)', marginBottom: '2rem' }}>
+            We design and build custom systems for businesses including POS systems, inventory management platforms, business automation tools, custom web platforms, and mobile dashboards.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ background: 'rgba(255,255,255,.04)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(232,81,10,.2)' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '.4rem', color: '#fff' }}>Custom POS</div>
+              <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'rgba(255,255,255,.6)' }}>Retail workflow tailored to you</p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,.04)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(232,81,10,.2)' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '.4rem', color: '#fff' }}>Inventory Platforms</div>
+              <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'rgba(255,255,255,.6)' }}>Multi-location tracking</p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,.04)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(232,81,10,.2)' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '.4rem', color: '#fff' }}>Automation</div>
+              <p style={{ fontSize: '0.8rem', lineHeight: 1.7, color: 'rgba(255,255,255,.6)' }}>Workflow automation for you</p>
+            </div>
+          </div>
+          <p style={{ fontSize: '0.95rem', color: '#fff' }}>If you have a business workflow, <strong>we can design a system around it.</strong></p>
+        </div>
+      </section>
+
       {/* CONTACT */}
       <section className="contact-section" id="contact">
         <div className="contact-left">
           <div className="contact-tag">Ready to start?</div>
-          <h2 className="contact-h2">Request a free<br /><em>live demo</em></h2>
-          <p className="contact-sub">Tell us about your hardware store, current inventory process, or any challenges you face. For Kenyan businesses, phone numbers are often more valuable than email addresses.</p>
+          <h2 className="contact-h2">Get a live<br /><em>demo today</em></h2>
+          <p className="contact-sub">Tell us about your hardware store, current inventory process, or any challenges you face. For African businesses, phone numbers are often more valuable than email addresses.</p>
         </div>
         <div>
           <form onSubmit={handleSubmit} noValidate>
@@ -603,13 +748,23 @@ export default function Page() {
                 required
               />
             </div>
-            <input
-              className="contact-input contact-email"
-              type="email"
-              placeholder="Email address"
-              value={form.email}
-              onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-            />
+            <div className="form-row">
+              <input
+                className="contact-input"
+                placeholder="Country"
+                value={form.country}
+                onChange={e => setForm(p => ({ ...p, country: e.target.value }))}
+                required
+              />
+              <input
+                className="contact-input contact-email"
+                type="email"
+                placeholder="Email address"
+                value={form.email}
+                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                required
+              />
+            </div>
             <textarea
               className="contact-textarea"
               rows={4}
@@ -630,14 +785,13 @@ export default function Page() {
 
       {/* FOOTER */}
       <footer>
-        <div className="footer-logo">Inventory Management</div>
+        <div className="footer-logo">Hardware<span>Stocks</span></div>
         <div>
-          <p className="footer-copy">Sales Tracking</p>
-          <p className="footer-copy">Debt Management</p>
-          <p className="footer-copy">Business Reports</p>
+          <p className="footer-copy">Retail Operations Platform for Africa</p>
+          <p className="footer-copy">Kenya • Tanzania • Expanding</p>
         </div>
-        <p className="footer-email">0791614036</p>
-        <p className="footer-copy">© 2026 Hardware POS</p>
+        <p className="footer-email">Powered by Vico Software -email: kimaniwilfred95@gmail.com • phone: 0791614036</p>
+        <p className="footer-copy">© 2026 Hardware Stocks — Multi-country retail operations system</p>
       </footer>
     </div>
   )
